@@ -98,36 +98,28 @@ st.markdown(f"""
 # ---------------------------- DB CONNECTION ----------------------------
 @st.cache_resource
 def connect_db():
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        st.error("Database URL not found in environment variables")
-        st.stop()
+    # Try Streamlit secrets first (production)
+    if 'database' in st.secrets:
+        db_url = st.secrets.database.url
+    # Fallback to .env (local development)
+    else:
+        load_dotenv()
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            st.error("Database URL not found. Check secrets or .env file.")
+            st.stop()
     
+    # Force PostgreSQL protocol
     db_url = db_url.replace("postgres://", "postgresql://", 1)
     
     try:
-        engine = create_engine(
-            db_url,
-            connect_args={"sslmode": "require"}
-        )
-        
-        with engine.begin() as conn:
-            result = conn.execute(text("SELECT 1"))
-            if not result.scalar() == 1:
-                raise ValueError("Connection test failed")
-                
+        engine = create_engine(db_url, connect_args={"sslmode": "require"})
+        # Test connection
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
         return engine
-        
     except Exception as e:
-        st.error(f"""
-        Database connection failed!
-        Error: {str(e)}
-        
-        Please verify:
-        1. Your IP is whitelisted in Aiven
-        2. Database is running
-        3. Credentials are correct
-        """)
+        st.error(f"Connection failed: {e}")
         st.stop()
 
 engine = connect_db()
