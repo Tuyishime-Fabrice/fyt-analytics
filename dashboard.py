@@ -512,10 +512,13 @@ with st.container():
         avg_group_size=('number_of_travelers', 'mean')
     ).reset_index().sort_values('bookings', ascending=False).head(10)
     
+    # Format the numbers without matplotlib-dependent styling
+    top_advisors_formatted = top_advisors.copy()
+    top_advisors_formatted['total_amount'] = top_advisors['total_amount'].apply(lambda x: f"${x:,.0f}")
+    top_advisors_formatted['avg_group_size'] = top_advisors['avg_group_size'].apply(lambda x: f"{x:.1f}")
+    
     st.dataframe(
-        top_advisors.style
-        .format({'total_amount': '${:,.0f}', 'avg_group_size': '{:.1f}'})
-        .background_gradient(cmap='Blues', subset=['bookings', 'total_amount']),
+        top_advisors_formatted,
         use_container_width=True
     )
     
@@ -586,8 +589,7 @@ with st.container():
     
     with col1:
         st.dataframe(
-            top_destinations.style
-            .background_gradient(cmap='Blues', subset=['bookings']),
+            top_destinations,
             use_container_width=True
         )
     
