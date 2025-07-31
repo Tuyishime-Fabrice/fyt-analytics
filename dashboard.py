@@ -13,22 +13,25 @@ from datetime import datetime, date
 load_dotenv()
 
 # ---------------------------- CONFIGURATION ----------------------------
-COLOR_PRIMARY = "#003366"  # Deep blue
-COLOR_SECONDARY = "#FFA500"  # Orange accent
+COLOR_PRIMARY = "#FFD700"  # Gold as primary color
+COLOR_SECONDARY = "#003366"  # Deep blue as secondary
 COLOR_BACKGROUND = "#F8F9FA"
 COLOR_TEXT = "#333333"
 COLOR_CARD = "#FFFFFF"
 COLOR_BORDER = "#E0E0E0"
 
-# Set page config
+# Set page config with smaller height
 st.set_page_config(
     page_title="FYT Admin Dashboard",
     page_icon=":bar_chart:",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        'About': "Forever Young Tours Admin Dashboard v1.0"
+    }
 )
 
-# Custom CSS for premium look
+# Custom CSS for compact layout with gold theme
 st.markdown(f"""
     <style>
         .stApp {{
@@ -37,16 +40,17 @@ st.markdown(f"""
         }}
         
         .sidebar .sidebar-content {{
-            background-color: {COLOR_PRIMARY};
+            background-color: {COLOR_SECONDARY};
             color: white;
         }}
         
         [data-testid="metric-container"] {{
             background-color: {COLOR_CARD} !important;
-            padding: 20px !important;
-            border-radius: 10px !important;
+            padding: 10px !important;
+            border-radius: 8px !important;
             border: 1px solid {COLOR_BORDER} !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            height: 100px !important;
         }}
         
         [data-testid="metric-container"] > div {{
@@ -56,40 +60,80 @@ st.markdown(f"""
         [data-testid="metric-container"] [data-testid="metric-value"] {{
             color: {COLOR_PRIMARY} !important;
             font-weight: 700 !important;
-            font-size: 1.8rem !important;
+            font-size: 1.4rem !important;
         }}
         
         [data-testid="metric-container"] [data-testid="metric-label"] {{
             color: {COLOR_TEXT} !important;
             font-weight: 500 !important;
-            font-size: 1rem !important;
+            font-size: 0.8rem !important;
         }}
         
         .stDataFrame {{
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }}
         
         .stAlert {{
-            border-radius: 10px;
+            border-radius: 8px;
+            padding: 0.5rem !important;
         }}
         
         .css-1aumxhk {{
-            background-color: {COLOR_PRIMARY};
+            background-color: {COLOR_SECONDARY};
             color: white;
         }}
         
-        h1, h2, h3, h4, h5, h6 {{
-            color: {COLOR_PRIMARY} !important;
+        h1 {{
+            font-size: 1.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }}
+        
+        h2 {{
+            font-size: 1.2rem !important;
+            margin-bottom: 0.5rem !important;
+        }}
+        
+        h3 {{
+            font-size: 1rem !important;
+            margin-bottom: 0.5rem !important;
+        }}
+        
+        .stPlotlyChart {{
+            height: 300px !important;
+        }}
+        
+        .stContainer {{
+            padding: 0.5rem !important;
+        }}
+        
+        .stMarkdown {{
+            margin-bottom: 0.5rem !important;
+        }}
+        
+        .element-container {{
+            margin-bottom: 0.5rem !important;
+        }}
+        
+        .st-bb {{
+            padding-bottom: 0.5rem !important;
+        }}
+        
+        .st-at {{
+            padding-top: 0.5rem !important;
+        }}
+        
+        .css-1v0mbdj {{
+            margin-bottom: 0.5rem !important;
         }}
         
         @media (max-width: 768px) {{
             .stColumns > div {{
-                margin-bottom: 1rem;
+                margin-bottom: 0.5rem;
             }}
             
             [data-testid="metric-container"] {{
-                margin-bottom: 1rem;
+                margin-bottom: 0.5rem;
             }}
         }}
     </style>
@@ -350,27 +394,11 @@ def apply_filters(df):
 df_filtered = apply_filters(df_bookings)
 
 # ---------------------------- DASHBOARD LAYOUT ----------------------------
-st.title("Forever Young Tours - Admin Dashboard")
-
-# Fixed HTML template using f-string instead of .format()
 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 st.markdown(f"""
-    <style>
-        .title-wrapper {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }}
-        .last-updated {{
-            font-size: 0.9rem;
-            color: #666;
-        }}
-    </style>
-    <div class="title-wrapper">
-        <div>
-            <h1>Forever Young Tours - Admin Dashboard</h1>
-        </div>
-        <div class="last-updated">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h1 style="color: {COLOR_PRIMARY}; margin: 0;">Forever Young Tours - Admin Dashboard</h1>
+        <div style="font-size: 0.8rem; color: #666;">
             Last updated: {current_time}
         </div>
     </div>
@@ -416,7 +444,7 @@ with st.container():
     avg_group_size = df_filtered['number_of_travelers'].mean()
     upcoming_trips = df_filtered[df_filtered['travel_date'] > datetime.now()].shape[0]
     
-    # Display metrics
+    # Display metrics in compact form
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("Total Bookings", f"{total_bookings:,}")
     col2.metric("Total Revenue", f"${total_income:,.0f}")
@@ -428,40 +456,46 @@ with st.container():
 with st.container():
     st.subheader("💰 Revenue & Payments Overview")
     
-    # Revenue over time
-    revenue_over_time = df_revenues.groupby('date')['net_income'].sum().reset_index()
-    fig_revenue = px.line(
-        revenue_over_time,
-        x='date',
-        y='net_income',
-        title="Net Income Over Time",
-        labels={'net_income': 'Net Income ($)', 'date': 'Date'},
-        color_discrete_sequence=[COLOR_PRIMARY]
-    )
-    fig_revenue.update_layout(
-        height=400,
-        plot_bgcolor=COLOR_BACKGROUND,
-        paper_bgcolor=COLOR_BACKGROUND
-    )
-    st.plotly_chart(fig_revenue, use_container_width=True)
+    col1, col2 = st.columns(2)
     
-    # Payment methods breakdown
-    payment_methods = df_payments['method_used'].value_counts().reset_index()
-    payment_methods.columns = ['method_used', 'count']
-    fig_payments = px.bar(
-        payment_methods,
-        x='method_used',
-        y='count',
-        title="Payment Methods Distribution",
-        labels={'method_used': 'Payment Method', 'count': 'Count'},
-        color_discrete_sequence=[COLOR_SECONDARY]
-    )
-    fig_payments.update_layout(
-        height=400,
-        plot_bgcolor=COLOR_BACKGROUND,
-        paper_bgcolor=COLOR_BACKGROUND
-    )
-    st.plotly_chart(fig_payments, use_container_width=True)
+    with col1:
+        # Revenue over time - smaller chart
+        revenue_over_time = df_revenues.groupby('date')['net_income'].sum().reset_index()
+        fig_revenue = px.line(
+            revenue_over_time,
+            x='date',
+            y='net_income',
+            title="Net Income Over Time",
+            labels={'net_income': 'Net Income ($)', 'date': 'Date'},
+            color_discrete_sequence=[COLOR_PRIMARY],
+            height=250
+        )
+        fig_revenue.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
+            plot_bgcolor=COLOR_BACKGROUND,
+            paper_bgcolor=COLOR_BACKGROUND
+        )
+        st.plotly_chart(fig_revenue, use_container_width=True)
+    
+    with col2:
+        # Payment methods breakdown - smaller chart
+        payment_methods = df_payments['method_used'].value_counts().reset_index()
+        payment_methods.columns = ['method_used', 'count']
+        fig_payments = px.bar(
+            payment_methods,
+            x='method_used',
+            y='count',
+            title="Payment Methods Distribution",
+            labels={'method_used': 'Payment Method', 'count': 'Count'},
+            color_discrete_sequence=[COLOR_PRIMARY],
+            height=250
+        )
+        fig_payments.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
+            plot_bgcolor=COLOR_BACKGROUND,
+            paper_bgcolor=COLOR_BACKGROUND
+        )
+        st.plotly_chart(fig_payments, use_container_width=True)
 
 # ---------------------------- BOOKINGS ANALYSIS ----------------------------
 with st.container():
@@ -470,7 +504,7 @@ with st.container():
     col1, col2 = st.columns(2)
     
     with col1:
-        # Bookings by status
+        # Bookings by status - smaller chart
         booking_status_counts = df_filtered['status'].value_counts().reset_index()
         booking_status_counts.columns = ['status', 'count']
         fig_status = px.pie(
@@ -479,12 +513,16 @@ with st.container():
             names='status',
             title="Bookings by Status",
             hole=0.4,
-            color_discrete_sequence=px.colors.sequential.Blues_r
+            color_discrete_sequence=[COLOR_PRIMARY, COLOR_SECONDARY, "#FFC000", "#A9A9A9"],
+            height=250
+        )
+        fig_status.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
         )
         st.plotly_chart(fig_status, use_container_width=True)
     
     with col2:
-        # Bookings by month
+        # Bookings by month - smaller chart
         bookings_by_month = df_filtered.groupby(
             df_filtered['booking_date'].dt.to_period('M')
         ).size().reset_index()
@@ -497,7 +535,13 @@ with st.container():
             y='count',
             title="Bookings by Month",
             labels={'month': 'Month', 'count': 'Number of Bookings'},
-            color_discrete_sequence=[COLOR_PRIMARY]
+            color_discrete_sequence=[COLOR_PRIMARY],
+            height=250
+        )
+        fig_monthly.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
+            plot_bgcolor=COLOR_BACKGROUND,
+            paper_bgcolor=COLOR_BACKGROUND
         )
         st.plotly_chart(fig_monthly, use_container_width=True)
 
@@ -505,43 +549,23 @@ with st.container():
 with st.container():
     st.subheader("🧑‍💼 Agent Performance")
     
-    # Top advisors by bookings
+    # Top advisors by bookings - compact table
     top_advisors = df_filtered.groupby(['advisorcode']).agg(
         bookings=('booking_id', 'count'),
         total_amount=('total_amount', 'sum'),
         avg_group_size=('number_of_travelers', 'mean')
-    ).reset_index().sort_values('bookings', ascending=False).head(10)
+    ).reset_index().sort_values('bookings', ascending=False).head(5)  # Show only top 5
     
-    # Format the numbers without matplotlib-dependent styling
+    # Format the numbers
     top_advisors_formatted = top_advisors.copy()
     top_advisors_formatted['total_amount'] = top_advisors['total_amount'].apply(lambda x: f"${x:,.0f}")
     top_advisors_formatted['avg_group_size'] = top_advisors['avg_group_size'].apply(lambda x: f"{x:.1f}")
     
     st.dataframe(
         top_advisors_formatted,
-        use_container_width=True
+        use_container_width=True,
+        height=200  # Fixed height for compact display
     )
-    
-    # Advisor status - check which status column exists
-    if 'advisor_status' in df_advisors.columns:
-        advisor_status = df_advisors['advisor_status'].value_counts().reset_index()
-        advisor_status.columns = ['status', 'count']
-    elif 'status' in df_advisors.columns:
-        advisor_status = df_advisors['status'].value_counts().reset_index()
-        advisor_status.columns = ['status', 'count']
-    else:
-        # Create empty dataframe if no status column exists
-        advisor_status = pd.DataFrame({'status': ['No Status Data'], 'count': [0]})
-    
-    fig_status = px.bar(
-        advisor_status,
-        x='status',
-        y='count',
-        title="Advisor Status Distribution",
-        labels={'status': 'Advisor Status', 'count': 'Number of Advisors'},
-        color_discrete_sequence=[COLOR_SECONDARY]
-    )
-    st.plotly_chart(fig_status, use_container_width=True)
 
 # ---------------------------- CLIENT ANALYSIS ----------------------------
 with st.container():
@@ -550,7 +574,7 @@ with st.container():
     col1, col2 = st.columns(2)
     
     with col1:
-        # Client types
+        # Client types - smaller chart
         client_types = df_clients['client_type'].value_counts().reset_index()
         client_types.columns = ['type', 'count']
         fig_client_types = px.pie(
@@ -559,46 +583,33 @@ with st.container():
             names='type',
             title="Client Types Distribution",
             hole=0.4,
-            color_discrete_sequence=px.colors.sequential.Blues_r
+            color_discrete_sequence=[COLOR_PRIMARY, COLOR_SECONDARY, "#FFC000"],
+            height=250
+        )
+        fig_client_types.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
         )
         st.plotly_chart(fig_client_types, use_container_width=True)
     
     with col2:
-        # Client countries
-        client_countries = df_users['country'].value_counts().reset_index().head(10)
+        # Client countries - smaller chart
+        client_countries = df_users['country'].value_counts().reset_index().head(5)  # Show only top 5
         client_countries.columns = ['country', 'count']
         fig_countries = px.bar(
             client_countries,
             x='country',
             y='count',
-            title="Top 10 Client Countries",
+            title="Top 5 Client Countries",
             labels={'country': 'Country', 'count': 'Number of Clients'},
-            color_discrete_sequence=[COLOR_PRIMARY]
+            color_discrete_sequence=[COLOR_PRIMARY],
+            height=250
+        )
+        fig_countries.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
+            plot_bgcolor=COLOR_BACKGROUND,
+            paper_bgcolor=COLOR_BACKGROUND
         )
         st.plotly_chart(fig_countries, use_container_width=True)
-
-# ---------------------------- TOUR DESTINATIONS ----------------------------
-with st.container():
-    st.subheader("🌍 Tour Destinations")
-    
-    # Top destinations
-    top_destinations = df_filtered['destination'].value_counts().reset_index().head(10)
-    top_destinations.columns = ['destination', 'bookings']
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.dataframe(
-            top_destinations,
-            use_container_width=True
-        )
-    
-    with col2:
-        # Map visualization
-        if 'latitude' in df_tours.columns and 'longitude' in df_tours.columns:
-            map_data = df_tours.dropna(subset=['latitude', 'longitude'])[['latitude', 'longitude']]
-            if not map_data.empty:
-                st.map(map_data)
 
 # ---------------------------- FOOTER ----------------------------
 st.divider()
