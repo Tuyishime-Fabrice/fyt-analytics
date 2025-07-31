@@ -8,6 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import io
 from datetime import datetime, date
+import pydeck as pdk
 
 # Load environment variables
 load_dotenv()
@@ -610,6 +611,49 @@ with st.container():
             paper_bgcolor=COLOR_BACKGROUND
         )
         st.plotly_chart(fig_countries, use_container_width=True)
+        # ---------------------------- TOUR DESTINATIONS ----------------------------
+with st.container():
+    st.subheader("🌍 Tour Destinations")
+    
+    # Top destinations - show only top 5 for compactness
+    top_destinations = df_filtered['destination'].value_counts().reset_index().head(5)
+    top_destinations.columns = ['destination', 'bookings']
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.dataframe(
+            top_destinations,
+            use_container_width=True,
+            height=200  # Fixed height for compact display
+        )
+    
+    with col2:
+        # Map visualization - compact version
+        if 'latitude' in df_tours.columns and 'longitude' in df_tours.columns:
+            map_data = df_tours.dropna(subset=['latitude', 'longitude'])
+            if not map_data.empty:
+                # Take only the first 5 destinations for compact display
+                map_data = map_data.head(5)
+                st.pydeck_chart(pdk.Deck(
+                    map_style='mapbox://styles/mapbox/light-v9',
+                    initial_view_state=pdk.ViewState(
+                        latitude=map_data['latitude'].mean(),
+                        longitude=map_data['longitude'].mean(),
+                        zoom=1,
+                        pitch=0,
+                    ),
+                    layers=[
+                        pdk.Layer(
+                            'ScatterplotLayer',
+                            data=map_data,
+                            get_position='[longitude, latitude]',
+                            get_color='[200, 30, 0, 160]',
+                            get_radius=100000,
+                        ),
+                    ],
+                    height=200  # Compact height
+                ))
 
 # ---------------------------- FOOTER ----------------------------
 st.divider()
